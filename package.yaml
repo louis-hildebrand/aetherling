@@ -1,7 +1,7 @@
 # see docs at https://docs.haskellstack.org/en/stable/yaml_configuration/
 name:                Aetherling
 version:             0.1.0.0
-github:              "David-Durst/Aetherling/theory/AetherlingSTIR"
+github:              "David-Durst/embeddedHaskellAetherling"
 license:             BSD3
 author:              "David Durst"
 maintainer:          "davidbdurst@gmail.com"
