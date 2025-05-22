@@ -25,8 +25,8 @@ import Data.List
 
 main :: IO ()
 main = do
-  --print_st_text
-  defaultMain tests
+  print_st_text
+  -- defaultMain tests
 --main = gen_io
 --main = print_st_text
 --main = do
@@ -86,13 +86,18 @@ gen_io = do
 
 print_st_text :: IO ()
 print_st_text = do
-  big_real_32_conv_2d_st_prints
-  big_real_32_conv_2d_b2b_st_prints
-  big_real_32_sharpen_st_prints
-  big_32_conv_2d_st_prints
-  big_32_conv_2d_b2b_st_prints
-  big_32_sharpen_st_prints
-  demosaic_st_prints
+  single_map_200_st_prints
+  conv_2d_st_prints
+  conv_2d_b2b_print_st
+  sharpen_print_st
+  camera_st_prints
+  -- big_real_32_conv_2d_st_prints
+  -- big_real_32_conv_2d_b2b_st_prints
+  -- big_real_32_sharpen_st_prints
+  -- big_32_conv_2d_st_prints
+  -- big_32_conv_2d_b2b_st_prints
+  -- big_32_sharpen_st_prints
+  -- demosaic_st_prints
   --print_st $ demosaic_ppar_tr !! 0
   return ()
 
