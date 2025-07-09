@@ -15,11 +15,11 @@ single_reduce_throughputs = map (\t -> t % 200) [1,2,4,5,8,10,20,40,200]
 single_reduce_sum_st_prints = sequence $
   fmap (\s -> compile_to_file
               single_reduce_sum (wrap_single_t s)
-              text_backend "reduce")
+              text_backend "sum")
   single_reduce_throughputs
 
 single_reduce_sum_chisel_prints = sequence $
   fmap (\s -> compile_to_file
               single_reduce_sum (wrap_single_t s)
-              Chisel "reduce")
+              Chisel "sum")
   single_reduce_throughputs
