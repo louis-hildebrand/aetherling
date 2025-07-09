@@ -93,7 +93,7 @@ data Test_Args a b = Test_Args {test_inputs :: [a], test_output :: b}
 test_with_backend :: (Shallow_Types.Aetherling_Value a,
                      Convertible_To_Atom_Strings b,
                      Convertible_To_Atom_Strings c) =>
-                     RH.Rewrite_StateM a -> 
+                     RH.Rewrite_StateM a ->
                      Throughput_Target -> Language_Target ->
                      Verilog_Test_Arg ->
                      [b] -> c ->
@@ -101,20 +101,20 @@ test_with_backend :: (Shallow_Types.Aetherling_Value a,
 test_with_backend shallow_seq_program (Min_Area_With_Throughput throughput) l_target verilog_conf
   inputs output = do
   let out_len = num_atoms output
-  
+
   let slowdown = head $ Test_Helpers.speed_to_slow [throughput] (toInteger out_len)
   test_with_backend' shallow_seq_program (Min_Area_With_Slowdown_Factor slowdown) l_target verilog_conf inputs output
 test_with_backend shallow_seq_program s_target l_target verilog_conf
   inputs output = do
   test_with_backend' shallow_seq_program s_target l_target verilog_conf inputs output
-  
+
 -- | Compile a shallowly embedded sequence language program to a backend
 -- representation. Then, run that backend representation through a verilog
 -- simulator with the specified input. Return if the output matches the input.
 test_with_backend' :: (Shallow_Types.Aetherling_Value a,
                      Convertible_To_Atom_Strings b,
                      Convertible_To_Atom_Strings c) =>
-                     RH.Rewrite_StateM a -> 
+                     RH.Rewrite_StateM a ->
                      Throughput_Target -> Language_Target ->
                      Verilog_Test_Arg ->
                      [b] -> c ->
@@ -149,7 +149,7 @@ test_with_backend' shallow_seq_program s_target l_target verilog_conf
                      tester_files <- Test_Helpers.generate_tester_io_with_rust
                                      p_expr inputs output
                      mapM (\(Test_Helpers.Rust_Gen_Params values_proto
-                              type_proto values_json valids_json) -> 
+                              type_proto values_json valids_json) ->
                               run_process
                               ("aetherling " ++
                                values_proto ++ " " ++
@@ -172,7 +172,7 @@ test_with_backend' shallow_seq_program s_target l_target verilog_conf
                      tester_files <- Test_Helpers.generate_tester_io_with_rust
                                      p_expr inputs output
                      mapM (\(Test_Helpers.Rust_Gen_Params values_proto
-                              type_proto values_json valids_json) -> 
+                              type_proto values_json valids_json) ->
                               run_process
                               ("aetherling " ++
                                values_proto ++ " " ++
@@ -268,7 +268,7 @@ compile_to_file shallow_seq_program s_target l_target output_name_template = do
   case result of
     Left x -> error $ "Compiler Error: " ++ show x
     Right x -> return x
-  
+
 compile_to_file' :: (Shallow_Types.Aetherling_Value a) =>
                      RH.Rewrite_StateM a -> Throughput_Target -> Language_Target ->
                      String -> ExceptT Compiler_Error IO [Process_Result]
@@ -326,9 +326,9 @@ compile_to_file' shallow_seq_program s_target l_target output_name_template = do
                     (root_dir ++
                       "/src/Core/Aetherling/Interpretations/" ++
                       "Backend_Execute/Chisel/compile_chisel.sh " ++
-                      output_file_name ++ " " ++
-                      chisel_dir ++ " " ++
-                      verilog_file_name
+                      "'" ++ output_file_name  ++ "'" ++ " " ++
+                      "'" ++ chisel_dir        ++ "'" ++ " " ++
+                      "'" ++ verilog_file_name ++ "'"
                     ) Nothing
               ) (zip program_strs [0..])
       compile_to_text :: [STE.Expr] ->
@@ -387,7 +387,7 @@ slowdown_target_to_file_name_string (All_With_Slowdown_Factor s) = show s
 slowdown_target_to_file_name_string (Type_Rewrites trs) =
   show (product_tr_periods trs)
 slowdown_target_to_file_name_string (Output_ST_Type t) = show $ STT.clocks_t t
-      
+
 run_process :: String -> Maybe FilePath -> IO Process_Result
 run_process process_str cwd = do
   --traceShowM $ "running: " ++ process_str
@@ -432,7 +432,7 @@ process_result_to_test_result process_result test_file = do
 -- This is a frontend for the three types of Seq Shallow to STIR compilers
 -- that also does error checking.
 compile_to_expr :: (Shallow_Types.Aetherling_Value a) =>
-                     RH.Rewrite_StateM a -> Throughput_Target -> 
+                     RH.Rewrite_StateM a -> Throughput_Target ->
                      Except Compiler_Error [STE.Expr]
 compile_to_expr shallow_seq_program s_target = do
   case s_target of
@@ -480,11 +480,11 @@ check_compiler_errors_with_throughput :: Ratio Integer -> STE.Expr -> Maybe Comp
 check_compiler_errors_with_throughput throughput program = do
   let out_st_t = ST_Conv.e_out_type $
                   ST_Conv.expr_to_types program
-  
+
   let out_len = STT.num_atoms_total_t out_st_t
   let s = head $ Test_Helpers.speed_to_slow [throughput] (toInteger out_len)
   check_compiler_errors_with_slowdown s program
-  
+
 check_compiler_errors_with_slowdown :: Int -> STE.Expr -> Maybe Compiler_Error
 check_compiler_errors_with_slowdown s program = do
   if check_type program
@@ -511,7 +511,7 @@ compile_with_type_rewrite_to_expr shallow_seq_program tr = do
   if Has_Error.has_error deep_st_program
     then deep_st_program
     else add_registers deep_st_program
-    
+
 compile_with_st_type_to_expr :: (Shallow_Types.Aetherling_Value a) =>
                                      RH.Rewrite_StateM a -> STT.AST_Type ->
                                      STE.Expr
@@ -526,7 +526,7 @@ compile_with_st_type_to_expr shallow_seq_program st_t = do
   if Has_Error.has_error deep_st_program
     then deep_st_program
     else add_registers deep_st_program
-    
+
 compile_with_throughput_to_expr :: (Shallow_Types.Aetherling_Value a) =>
                                      RH.Rewrite_StateM a -> Ratio Integer ->
                                      STE.Expr
@@ -543,7 +543,7 @@ compile_with_throughput_to_expr shallow_seq_program throughput = do
     --let x = add_registers deep_st_program
     --traceShow (Comp_Area.get_area x) x
     add_registers deep_st_program
-  
+
 compile_with_slowdown_to_expr :: (Shallow_Types.Aetherling_Value a) =>
                                      RH.Rewrite_StateM a -> Int ->
                                      STE.Expr
@@ -559,7 +559,7 @@ compile_with_slowdown_to_expr shallow_seq_program s = do
     --let x = add_registers deep_st_program
     --traceShow (Comp_Area.get_area x) x
     add_registers deep_st_program
-  
+
 compile_with_slowdown_to_all_possible_expr :: (Shallow_Types.Aetherling_Value a) =>
                                               RH.Rewrite_StateM a -> Int ->
                                               [STE.Expr]
@@ -577,7 +577,7 @@ lower_seq_shallow_to_deep_indexed shallow_seq_program = do
   let deep_seq_program_no_indexes =
         Seq_SToD.seq_shallow_to_deep shallow_seq_program
   add_indexes deep_seq_program_no_indexes
-  
+
 add_registers :: STE.Expr -> STE.Expr
 add_registers deep_st_program = do
   let pipelined_program = APR.add_pipeline_registers deep_st_program 3

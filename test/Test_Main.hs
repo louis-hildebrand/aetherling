@@ -27,13 +27,20 @@ import Data.List
 main :: IO ()
 main = do
   print_st_text
+  print_verilog
 
 print_st_text :: IO ()
 print_st_text = do
   single_reduce_sum_st_prints
   single_map_200_st_prints
-  conv_2d_st_prints
-  conv_2d_b2b_print_st
-  sharpen_print_st
-  camera_st_prints
+  -- conv_2d_st_prints
+  -- conv_2d_b2b_print_st
+  -- sharpen_print_st
+  -- camera_st_prints
+  return ()
+
+print_verilog :: IO ()
+print_verilog = do
+  single_reduce_sum_chisel_prints
+  single_map_200_chisel_prints
   return ()

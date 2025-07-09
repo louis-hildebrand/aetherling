@@ -57,7 +57,7 @@ apps_tests_chisel = testGroup "Full Application Tests"
     testCase "SHARPEN in paper" $
     (TS.all_success sharpen_results_chisel) @? "sharpen failed"
   ]
-  
+
 apps_tests_chisel_map = testGroup "Full Application Tests"
   [
     testCase "MAP in paper" $
@@ -83,7 +83,7 @@ add_5 atom_in = do
   let const = const_genC (Atom_UInt8 5) atom_in
   let tupled = atom_tupleC atom_in const
   addC tupled
-single_map_200 = 
+single_map_200 =
   mapC' (Proxy @200) add_5 $
   com_input_seq "I" (Proxy :: Proxy (Seq 200 Atom_UInt8))
 single_map_200_seq_idx = add_indexes $ seq_shallow_to_deep single_map_200
@@ -117,6 +117,11 @@ single_map_200_st_prints = sequence $
               single_map_200 (wrap_single_t s)
               text_backend "map")
   [1,2,4,5,8,10,20,40,200]
+single_map_200_chisel_prints = sequence $
+  fmap (\s -> compile_to_file
+              single_map_200 (wrap_single_t s)
+              Chisel "map")
+  [1,2,4,5,8,10,20,40,200]
 
 single_map_200_results' = sequence $
   fmap (\s -> test_with_backend
@@ -132,7 +137,7 @@ stencil_3_1dC_nested in_seq = do
                      in_seq
   let partitioned_tuple = partitionC Proxy (Proxy @1) window_tuple
   mapC seq_tuple_to_seqC partitioned_tuple
-  
+
 stencil_3x3_2dC_test in_col in_img = do
   let first_row = in_img
   let second_row = shiftC in_col in_img
@@ -147,7 +152,7 @@ stencil_3x3_2dC_test in_col in_img = do
 stencil_2d_test = stencil_3x3_2dC_test (Proxy @4) $
   com_input_seq "I" (Proxy :: Proxy (Seq 16 Atom_UInt8))
 stencil_2d_test_seq_idx = add_indexes $ seq_shallow_to_deep stencil_2d_test
-stencil_2d_test_ppar = 
+stencil_2d_test_ppar =
   fmap (\s -> compile_with_throughput_to_expr stencil_2d_test s) [16,8,4,2,1,1%3,1%9]
 stencil_2d_test_ppar_typechecked =
   fmap check_type stencil_2d_test_ppar
@@ -173,7 +178,7 @@ stencil_2d_results_chisel = sequence $
 stencil_2d_results_chisel' = sequence $
   fmap (\s -> test_with_backend
               stencil_2d_test (wrap_single_t s)
-              Chisel (Save_Gen_Verilog "chisel_stencil_2d") 
+              Chisel (Save_Gen_Verilog "chisel_stencil_2d")
               stencil_2d_inputs stencil_2d_output)
   [2]
 stencil_2d_results' = sequence $
@@ -188,7 +193,7 @@ tuple_2d_mul_shallow_no_input in_seq = do
                     fmap (list_to_seq (Proxy @3)) $
                     fmap (fmap Atom_UInt8) hask_kernel
   let kernel = const_genC kernel_list in_seq
-  let kernel_and_values = map2C (map2C atom_tupleC) in_seq kernel 
+  let kernel_and_values = map2C (map2C atom_tupleC) in_seq kernel
   let mul_result = mapC (mapC lslC) kernel_and_values
   let sum = reduceC'' (mapC addC) $ mapC (reduceC addC) mul_result
   let norm_list = list_to_seq (Proxy @1) [list_to_seq (Proxy @1) [Atom_UInt8 4]]
@@ -221,7 +226,7 @@ conv_2d_shallow_no_input in_col in_seq = do
   let stencil = stencil_3x3_2dC_test in_col in_seq
   let conv_result = mapC tuple_2d_mul_shallow_no_input stencil
   unpartitionC (unpartitionC conv_result)
-conv_2d = conv_2d_shallow_no_input (Proxy @4) $ 
+conv_2d = conv_2d_shallow_no_input (Proxy @4) $
   com_input_seq "I" (Proxy :: Proxy (Seq 16 Atom_UInt8))
 conv_2d_seq_idx = add_indexes $ seq_shallow_to_deep conv_2d
 conv_2d_ppar =
@@ -282,7 +287,7 @@ down_from_pyramid_2d_no_input in_seq = do
         partitionC (Proxy @4) (Proxy @2) Proxy (Proxy @0) $
         partitionC (Proxy @8) (Proxy @4) Proxy (Proxy @0) layer1_drop_cols
   --layer1_blurred
-down_from_pyramid_2d = down_from_pyramid_2d_no_input $ 
+down_from_pyramid_2d = down_from_pyramid_2d_no_input $
   com_input_seq "I" (Proxy :: Proxy (Seq 64 (Seq 1 (Seq 1 Atom_Int))))
 down_from_pyramid_2d_seq_idx = add_indexes $ seq_shallow_to_deep down_from_pyramid_2d
 down_from_pyramid_2d_ppar =
@@ -307,7 +312,7 @@ down_from_pyramid_2d_inputs :: [[Integer]] = [[1..row_size_pyramid*row_size_pyra
 down_from_pyramid_2d_output :: [Integer] =
   down_generator [1..64]
   --conv_generator $ stencil_generator 8 [1..]
-  --down_generator  $ conv_generator $ stencil_generator 8 [1..] 
+  --down_generator  $ conv_generator $ stencil_generator 8 [1..]
 down_from_pyramid_2d_results = sequence $
   fmap (\s -> test_with_backend
               down_from_pyramid_2d (wrap_single_s s)
@@ -323,7 +328,7 @@ first_layer_pyr_shallow_no_input in_seq = do
         mapC (down_1dC 1) $
         partitionC (Proxy @4) (Proxy @2) Proxy (Proxy @0) $
         partitionC (Proxy @8) (Proxy @4) Proxy (Proxy @0) layer1_drop_cols
-first_layer_pyr = first_layer_pyr_shallow_no_input $ 
+first_layer_pyr = first_layer_pyr_shallow_no_input $
   com_input_seq "I" (Proxy :: Proxy (Seq 64 (Seq 1 (Seq 1 Atom_Int))))
 first_layer_pyr_seq_idx = add_indexes $ seq_shallow_to_deep first_layer_pyr
 first_layer_pyr_ppar =
@@ -334,7 +339,7 @@ first_layer_pyr_ppar_typechecked' =
   fmap check_type_get_error first_layer_pyr_ppar
 first_layer_pyr_inputs :: [[Integer]] = [[1..row_size_pyramid*row_size_pyramid]]
 first_layer_pyr_output :: [Integer] =
-  down_generator  $ conv_generator $ stencil_generator 8 [1..] 
+  down_generator  $ conv_generator $ stencil_generator 8 [1..]
 first_layer_pyr_results = sequence $
   fmap (\s -> test_with_backend
               first_layer_pyr (wrap_single_s s)
@@ -342,7 +347,7 @@ first_layer_pyr_results = sequence $
               first_layer_pyr_inputs first_layer_pyr_output)
   [1,2,4,8,16,32,64,192,576]
 first_layer_pyr_results' = sequence $
-  fmap (\s -> test_with_backend 
+  fmap (\s -> test_with_backend
               first_layer_pyr (wrap_single_s s)
               Magma No_Verilog
               first_layer_pyr_inputs first_layer_pyr_output)
@@ -374,7 +379,7 @@ pyramid_2d_shallow_no_input in_seq = do
         mapC (down_1dC 1) $
         partitionC (Proxy @2) (Proxy @2) Proxy (Proxy @0) $
         partitionC (Proxy @4) (Proxy @2) Proxy (Proxy @0) layer2_drop_cols
-pyramid_2d = pyramid_2d_shallow_no_input $ 
+pyramid_2d = pyramid_2d_shallow_no_input $
   com_input_seq "I" (Proxy :: Proxy (Seq 64 (Seq 1 (Seq 1 Atom_Int))))
 pyramid_2d_seq_idx = add_indexes $ seq_shallow_to_deep pyramid_2d
 pyramid_2d_ppar =
@@ -393,9 +398,9 @@ down_generator conv_output =
 pyramid_2d_inputs :: [[Integer]] = [[1..row_size_pyramid*row_size_pyramid]]
 pyramid_2d_output :: [Integer] =
   down_generator $ conv_generator $ stencil_generator 4 $
-  down_generator  $ conv_generator $ stencil_generator 8 [1..] 
+  down_generator  $ conv_generator $ stencil_generator 8 [1..]
 pyramid_2d_results = sequence $
-  fmap (\s -> test_with_backend 
+  fmap (\s -> test_with_backend
               pyramid_2d (wrap_single_s s)
               Magma (Save_Gen_Verilog "pyramid")
               pyramid_2d_inputs pyramid_2d_output) [1,2,4,8,16,32,64,192,576]
@@ -420,14 +425,14 @@ pyramid_2d_prints = sequence $
               text_backend "pyramid2dhueristic") [1,2,4,8,16,32,64,192,576]
 
 -}
-  
+
 stencil_2_1dC_nested in_seq = do
   let first_el = in_seq
   let second_el = shiftC (Proxy @1) first_el
   let tuple = map2C seq_tupleC second_el first_el
   let partitioned_tuple = partitionC Proxy (Proxy @1) tuple
   mapC seq_tuple_to_seqC partitioned_tuple
-  
+
 stencil_2x2_2dC_test in_col in_img = do
   let first_row = in_img
   let second_row = shiftC in_col in_img
@@ -450,7 +455,7 @@ tuple_2d_2x2_mul_shallow_no_input in_seq = do
   let norm = const_genC norm_list in_seq
   let sum_and_norm = map2C (map2C atom_tupleC) sum norm
   mapC (mapC lsrC) sum_and_norm
-  
+
 conv_2d_b2b_shallow_no_input in_col in_seq = do
   let first_stencil = stencil_3x3_2dC_test in_col in_seq
   let first_conv = unpartitionC $ unpartitionC $
@@ -458,7 +463,7 @@ conv_2d_b2b_shallow_no_input in_col in_seq = do
   let second_stencil = stencil_2x2_2dC_test in_col first_conv
   unpartitionC $ unpartitionC $
     mapC tuple_2d_2x2_mul_shallow_no_input second_stencil
-conv_2d_b2b = conv_2d_b2b_shallow_no_input (Proxy @4) $ 
+conv_2d_b2b = conv_2d_b2b_shallow_no_input (Proxy @4) $
   com_input_seq "I" (Proxy :: Proxy (Seq 16 Atom_UInt8))
 conv_2d_b2b_seq_idx = add_indexes $ seq_shallow_to_deep conv_2d_b2b
 conv_2d_b2b_ppar =
@@ -498,11 +503,11 @@ conv_2d_b2b_results_chisel' = sequence $
               conv_2d_b2b (wrap_single_t s)
               Chisel (Save_Gen_Verilog "conv2d_b2b")
               conv_2d_b2b_inputs conv_2d_b2b_output) [2]
-conv_2d_b2b_print_st = sequence $ 
+conv_2d_b2b_print_st = sequence $
   fmap (\s -> compile_to_file
               conv_2d_b2b (wrap_single_t s)
               text_backend "conv2d_b2b") [16,8,4,2,1,1%3,1%9]
-conv_2d_b2b_compile = sequence $ 
+conv_2d_b2b_compile = sequence $
   fmap (\s -> compile_to_file
               conv_2d_b2b (wrap_single_t s)
               Magma "conv2d_b2b") [16,8,4,2,1,1%3,1%9]
@@ -515,7 +520,7 @@ conv_2d_3x3_repeat_b2b_shallow_no_input in_col in_seq = do
   let second_stencil = stencil_3x3_2dC_test in_col first_conv
   unpartitionC $ unpartitionC $
     mapC tuple_2d_mul_shallow_no_input second_stencil
-conv_2d_3x3_repeat_b2b = conv_2d_3x3_repeat_b2b_shallow_no_input (Proxy @4) $ 
+conv_2d_3x3_repeat_b2b = conv_2d_3x3_repeat_b2b_shallow_no_input (Proxy @4) $
   com_input_seq "I" (Proxy :: Proxy (Seq 16 Atom_UInt8))
 conv_2d_3x3_repeat_b2b_seq_idx = add_indexes $ seq_shallow_to_deep conv_2d_3x3_repeat_b2b
 conv_2d_3x3_repeat_b2b_ppar =
@@ -582,7 +587,7 @@ sharpen_one_pixel a_pixel b_pixel = do
   b_sub_a
 -}
 sharpen_one_pixel_map_no_input a_pixel b_pixel = do
-  map2C sharpen_one_pixel a_pixel b_pixel 
+  map2C sharpen_one_pixel a_pixel b_pixel
 sharpen_one_pixel_map = sharpen_one_pixel_map_no_input
   (com_input_seq "I0" (Proxy :: Proxy (Seq 2 Atom_UInt8)))
   (com_input_seq "I1" (Proxy :: Proxy (Seq 2 Atom_UInt8)))
@@ -597,7 +602,7 @@ sharpen_one_pixel_map_ppar_typechecked' =
 sharpen_one_pixel_map_inputs :: [[Word8]] = [[1,2],[2,30]]
 sharpen_one_pixel_map_output :: [Word8] =
   zipWith sharpen_one_pixel'
-  (sharpen_one_pixel_map_inputs !! 0) 
+  (sharpen_one_pixel_map_inputs !! 0)
   (sharpen_one_pixel_map_inputs !! 1)
 sharpen_one_pixel_map_results = sequence $
   fmap (\s -> test_with_backend
@@ -631,16 +636,16 @@ sharpen_ppar_typechecked' =
   fmap check_type_get_error sharpen_ppar
 sharpen_inputs :: [[Word8]] = fmap (fmap fromIntegral) [[i * 5 | i <- [1..row_size * row_size]]]
 sharpen_output :: [Word8] =
-  zipWith sharpen_one_pixel' 
+  zipWith sharpen_one_pixel'
   (conv_generator $ stencil_generator 4 (sharpen_inputs !! 0))
   (sharpen_inputs !! 0)
 sharpen_results = sequence $
-  fmap (\s -> test_with_backend 
+  fmap (\s -> test_with_backend
               sharpen (wrap_single_t s)
               Magma (Save_Gen_Verilog "sharpen")
               sharpen_inputs sharpen_output) [16,8,4,2,1,1%3,1%9]
 sharpen_results_chisel = sequence $
-  fmap (\s -> test_with_backend 
+  fmap (\s -> test_with_backend
               sharpen (wrap_single_t s)
               Chisel (Save_Gen_Verilog "sharpen")
               sharpen_inputs sharpen_output) [16,8,4,2,1,1%3,1%9]
@@ -650,7 +655,7 @@ sharpen_results_one = sequence $
               Magma (Save_Gen_Verilog "sharpen")
               sharpen_inputs sharpen_output) [48]
 sharpen_results_all_types = sequence $
-  fmap (\s -> test_with_backend 
+  fmap (\s -> test_with_backend
               sharpen (All_With_Slowdown_Factor s)
               Magma (Save_Gen_Verilog "sharpen")
               sharpen_inputs sharpen_output) [1,2,4,8,16,48,144]
