@@ -29,3 +29,5 @@ target/
 *.prof
 *.hp
 *.tar.gz
+
+/test/no_bench/
