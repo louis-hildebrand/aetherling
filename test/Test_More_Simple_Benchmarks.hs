@@ -7,10 +7,10 @@ import Data.Proxy
 import Data.Ratio
 
 single_reduce_sum =
-  reduceC' (Proxy @200) addC $
-  com_input_seq "I" (Proxy :: Proxy (Seq 200 Atom_UInt8))
+  reduceC' (Proxy @840) addC $
+  com_input_seq "I" (Proxy :: Proxy (Seq 840 Atom_UInt8))
 
-single_reduce_throughputs = map (\t -> t % 200) [1,2,4,5,8,10,20,40,200]
+single_reduce_throughputs = map (\t -> t % 840) [1, 2, 3, 4, 5, 6, 7, 8]
 
 single_reduce_sum_st_prints = sequence $
   fmap (\s -> compile_to_file
