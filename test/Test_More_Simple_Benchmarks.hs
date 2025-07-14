@@ -8,7 +8,7 @@ import Data.Ratio
 
 single_reduce_sum =
   reduceC' (Proxy @840) addC $
-  com_input_seq "I" (Proxy :: Proxy (Seq 840 Atom_UInt8))
+  com_input_seq "I" (Proxy :: Proxy (Seq 840 Atom_UInt32))
 
 single_reduce_throughputs = map (\t -> t % 840) [1, 2, 3, 4, 5, 6, 7, 8]
 
