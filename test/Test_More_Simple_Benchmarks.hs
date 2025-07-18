@@ -23,3 +23,27 @@ single_reduce_sum_chisel_prints = sequence $
               single_reduce_sum (wrap_single_t s)
               Chisel "sum")
   single_reduce_throughputs
+
+curried_mul x y = do
+  let tupled = atom_tupleC x y
+  mulC tupled
+
+dot_prod =
+  let s0 = com_input_seq "I0" (Proxy :: Proxy (Seq 840 Atom_UInt32)) in
+  let s1 = com_input_seq "I1" (Proxy :: Proxy (Seq 840 Atom_UInt32)) in
+  let products = map2C curried_mul s0 s1 in
+  reduceC addC products
+
+dot_prod_throughputs = single_reduce_throughputs
+
+dot_prod_st_prints = sequence $
+  fmap (\s -> compile_to_file
+              dot_prod (wrap_single_t s)
+              text_backend "dot")
+  dot_prod_throughputs
+
+dot_prod_chisel_prints = sequence $
+  fmap (\s -> compile_to_file
+              dot_prod (wrap_single_t s)
+              Chisel "dot")
+  dot_prod_throughputs
