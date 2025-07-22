@@ -29,8 +29,8 @@ curried_mul x y = do
   mulC tupled
 
 dot_prod =
-  let s0 = com_input_seq "I0" (Proxy :: Proxy (Seq 840 Atom_UInt32)) in
-  let s1 = com_input_seq "I1" (Proxy :: Proxy (Seq 840 Atom_UInt32)) in
+  let s0 = com_input_seq "I0" (Proxy :: Proxy (Seq 840 Atom_UInt16)) in
+  let s1 = com_input_seq "I1" (Proxy :: Proxy (Seq 840 Atom_UInt16)) in
   let products = map2C curried_mul s0 s1 in
   reduceC addC products
 
