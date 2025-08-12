@@ -31,18 +31,16 @@ main = do
 
 print_st_text :: IO ()
 print_st_text = do
+  big_conv_2d_st_prints
   conv1d_st_prints
   dot_prod_st_prints
   single_reduce_sum_st_prints
   single_map_200_st_prints
-  -- conv_2d_st_prints
-  -- conv_2d_b2b_print_st
-  -- sharpen_print_st
-  -- camera_st_prints
   return ()
 
 print_verilog :: IO ()
 print_verilog = do
+  big_conv_2d_chisel_prints
   conv1d_chisel_prints
   dot_prod_chisel_prints
   single_reduce_sum_chisel_prints
