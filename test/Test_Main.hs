@@ -31,6 +31,7 @@ main = do
 
 print_st_text :: IO ()
 print_st_text = do
+  small_conv_2d_st_prints
   big_conv_2d_st_prints
   conv1d_st_prints
   dot_prod_st_prints
@@ -40,6 +41,7 @@ print_st_text = do
 
 print_verilog :: IO ()
 print_verilog = do
+  small_conv_2d_chisel_prints
   big_conv_2d_chisel_prints
   conv1d_chisel_prints
   dot_prod_chisel_prints

@@ -275,6 +275,14 @@ conv_2d_verilog_prints = sequence $
               conv_2d (wrap_single_t s)
               text_backend "conv2d") [16,8,4,2,1,1%3,1%9]
 
+small_conv_2d_st_prints = sequence $
+  fmap (\s -> compile_to_file
+              conv_2d (wrap_single_t s)
+              text_backend "smallconv2d") [16,8,4,2,1,1%3,1%9]
+small_conv_2d_chisel_prints = sequence $
+  fmap (\s -> compile_to_file
+              conv_2d (wrap_single_t s)
+              Chisel "smallconv2d") [16,8,4,2,1,1%3,1%9]
 
 {-
 
