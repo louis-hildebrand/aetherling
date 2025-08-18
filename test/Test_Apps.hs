@@ -520,6 +520,17 @@ conv_2d_b2b_compile = sequence $
               conv_2d_b2b (wrap_single_t s)
               Magma "conv2d_b2b") [16,8,4,2,1,1%3,1%9]
 
+small_conv_2d_b2b = conv_2d_b2b_shallow_no_input (Proxy @4) $
+  com_input_seq "I" (Proxy :: Proxy (Seq 16 Atom_UInt8))
+small_conv_2d_b2b_st_prints = sequence $
+  fmap (\s -> compile_to_file
+              small_conv_2d_b2b (wrap_single_t s)
+              text_backend "smallconvb2b") [16,8,4,2,1,1%3,1%9]
+small_conv_2d_b2b_chisel_prints = sequence $
+  fmap (\s -> compile_to_file
+              small_conv_2d_b2b (wrap_single_t s)
+              Chisel "smallconvb2b") [16,8,4,2,1,1%3,1%9]
+
 
 conv_2d_3x3_repeat_b2b_shallow_no_input in_col in_seq = do
   let first_stencil = stencil_3x3_2dC_test in_col in_seq
