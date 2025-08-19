@@ -682,3 +682,12 @@ sharpen_print_st = sequence $
   fmap (\s -> compile_to_file
               sharpen (wrap_single_t s)
               text_backend "sharpen") [16,8,4,2,1,1%3,1%9]
+
+small_sharpen_st_prints = sequence $
+  fmap (\s -> compile_to_file
+              sharpen (wrap_single_t s)
+              text_backend "smallsharpen") [16,8,4,2,1,1%3,1%9]
+small_sharpen_chisel_prints = sequence $
+  fmap (\s -> compile_to_file
+              sharpen (wrap_single_t s)
+              Chisel "smallsharpen") [16,8,4,2,1,1%3,1%9]
