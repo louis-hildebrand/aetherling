@@ -37,7 +37,7 @@ stencil_3_1dC_nested in_seq = do
                      in_seq
   let partitioned_tuple = partitionC Proxy (Proxy @1) window_tuple
   mapC seq_tuple_to_seqC partitioned_tuple
-  
+
 stencil_3x3_2dC_test in_col in_img = do
   let first_row = in_img
   let second_row = shiftC in_col in_img
@@ -57,7 +57,7 @@ stencil_2_1dC_nested in_seq = do
   let tuple = map2C seq_tupleC second_el first_el
   let partitioned_tuple = partitionC Proxy (Proxy @1) tuple
   mapC seq_tuple_to_seqC partitioned_tuple
-  
+
 stencil_2x2_2dC_test in_col in_img = do
   let first_row = in_img
   let second_row = shiftC in_col in_img
@@ -73,7 +73,7 @@ tuple_2d_mul_shallow_no_input in_seq = do
                     fmap (list_to_seq (Proxy @3)) $
                     fmap (fmap Atom_UInt32) hask_kernel_real32
   let kernel = const_genC kernel_list in_seq
-  let kernel_and_values = map2C (map2C atom_tupleC) in_seq kernel 
+  let kernel_and_values = map2C (map2C atom_tupleC) in_seq kernel
   let mul_result = mapC (mapC mulC) kernel_and_values
   let sum = reduceC'' (mapC addC) $ mapC (reduceC addC) mul_result
   let norm_list = list_to_seq (Proxy @1) [list_to_seq (Proxy @1) [Atom_FixP1_7 (1/16)]]
@@ -111,7 +111,7 @@ conv_2d_b2b_shallow_no_input in_col in_seq = do
 row_size_conv2d_big_real_32 :: Integer = 1920
 col_size_conv2d_big_real_32 :: Integer = 1080
 img_size_conv2d_big_real_32 :: Int = fromInteger $ col_size_conv2d_big_real_32*row_size_conv2d_big_real_32
-big_real_32_conv_2d = conv_2d_shallow_no_input (Proxy @1920) $ 
+big_real_32_conv_2d = conv_2d_shallow_no_input (Proxy @1920) $
   com_input_seq "I" (Proxy :: Proxy (Seq 2073600 Atom_UInt32))
 big_real_32_conv_2d_seq_idx = add_indexes $ seq_shallow_to_deep big_real_32_conv_2d
 big_real_32_conv_2d_throughputs = [16, 8, 4, 2, 1, 1 % 3]
@@ -154,12 +154,21 @@ big_real_32_conv_2d_verilog_prints = sequence $
               big_real_32_conv_2d (wrap_single_t s)
               Magma "conv2d") big_real_32_conv_2d_throughputs
 
+big_conv2d_st_prints = sequence $
+  fmap (\s -> compile_to_file
+              big_real_32_conv_2d (wrap_single_t s)
+              text_backend "bigconv2d") big_real_32_conv_2d_throughputs
+big_conv2d_chisel_prints = sequence $
+  fmap (\s -> compile_to_file
+              big_real_32_conv_2d (wrap_single_t s)
+              Chisel "bigconv2d") big_real_32_conv_2d_throughputs
+
 row_size_big_real_32_b2b = 1920
 col_size_big_real_32_b2b = 1080
 img_size_big_real_32_b2b :: Int = fromInteger $ col_size_big_real_32_b2b*row_size_big_real_32_b2b
 big_real_32_conv_2d_b2b_throughputs = [16, 8, 4, 2, 1, 1 % 3]
 --big_real_32_conv_2d_b2b_slowdowns = speed_to_slow [1 % 3] (toInteger img_size_big_real_32_b2b)
-big_real_32_conv_2d_b2b = conv_2d_b2b_shallow_no_input (Proxy @1920) $ 
+big_real_32_conv_2d_b2b = conv_2d_b2b_shallow_no_input (Proxy @1920) $
   com_input_seq "I" (Proxy :: Proxy (Seq 2073600 Atom_UInt32))
 big_real_32_conv_2d_b2b_seq_idx = add_indexes $ seq_shallow_to_deep big_real_32_conv_2d_b2b
 big_real_32_conv_2d_b2b_ppar =
@@ -220,7 +229,7 @@ sharpen_shallow_no_input in_col in_seq = do
 row_size_sharpen_big_real_32 :: Integer = 1920
 col_size_sharpen_big_real_32 :: Integer = 1080
 img_size_sharpen_big_real_32 :: Int = fromInteger $ col_size_sharpen_big_real_32*row_size_sharpen_big_real_32
-big_real_32_sharpen = sharpen_shallow_no_input (Proxy @1920) $ 
+big_real_32_sharpen = sharpen_shallow_no_input (Proxy @1920) $
   com_input_seq "I" (Proxy :: Proxy (Seq 2073600 Atom_UInt32))
 big_real_32_sharpen_seq_idx = add_indexes $ seq_shallow_to_deep big_real_32_sharpen
 big_real_32_sharpen_throughputs = [16, 8, 4, 2, 1, 1 % 3]
@@ -233,21 +242,21 @@ big_real_32_sharpen_ppar_typechecked' =
   fmap check_type_get_error big_real_32_sharpen_ppar
 big_real_32_sharpen_inputs :: [[Word32]] = map (map fromIntegral) [[i * 5 | i <- [1..row_size_sharpen_big_real_32 * col_size_sharpen_big_real_32]]]
 big_real_32_sharpen_output :: [Word32] =
-  zipWith sharpen_one_pixel' 
+  zipWith sharpen_one_pixel'
   (conv_generator $ stencil_generator row_size_sharpen_big_real_32 (big_real_32_sharpen_inputs !! 0))
   (big_real_32_sharpen_inputs !! 0)
 big_real_32_sharpen_results = sequence $
-  fmap (\s -> test_with_backend 
+  fmap (\s -> test_with_backend
               big_real_32_sharpen (wrap_single_t s)
               Magma (Save_Gen_Verilog "big_real_32_sharpen")
               big_real_32_sharpen_inputs big_real_32_sharpen_output) big_real_32_sharpen_throughputs
 big_real_32_sharpen_results_chisel = sequence $
-  fmap (\s -> test_with_backend 
+  fmap (\s -> test_with_backend
               big_real_32_sharpen (wrap_single_t s)
               Chisel (Save_Gen_Verilog "big_real_32_sharpen")
               big_real_32_sharpen_inputs big_real_32_sharpen_output) big_real_32_sharpen_throughputs
 big_real_32_sharpen_results_chisel' = sequence $
-  fmap (\s -> test_with_backend 
+  fmap (\s -> test_with_backend
               big_real_32_sharpen (wrap_single_t s)
               Chisel (Save_Gen_Verilog "big_real_32_sharpen")
               big_real_32_sharpen_inputs big_real_32_sharpen_output) [big_real_32_sharpen_throughputs !! 3]
