@@ -198,6 +198,14 @@ big_real_32_conv_2d_b2b_st_prints = sequence $
               big_real_32_conv_2d_b2b (wrap_single_t s)
               text_backend "big_real_32_conv2d_b2b") big_real_32_conv_2d_b2b_throughputs
 
+big_convb2b_st_prints = sequence $
+  fmap (\s -> compile_to_file
+              big_real_32_conv_2d_b2b (wrap_single_t s)
+              text_backend "bigconvb2b") big_real_32_conv_2d_b2b_throughputs
+big_convb2b_chisel_prints = sequence $
+  fmap (\s -> compile_to_file
+              big_real_32_conv_2d_b2b (wrap_single_t s)
+              Chisel "bigconvb2b") big_real_32_conv_2d_b2b_throughputs
 
 t_const' = 15
 sharpen_one_pixel a_pixel b_pixel = do
@@ -264,6 +272,15 @@ big_real_32_sharpen_st_prints = sequence $
   fmap (\s -> compile_to_file
               big_real_32_sharpen (wrap_single_t s)
               text_backend "big_real_32_sharpen") big_real_32_sharpen_throughputs
+
+big_sharpen_st_prints = sequence $
+  fmap (\s -> compile_to_file
+              big_real_32_sharpen (wrap_single_t s)
+              text_backend "bigsharpen") big_real_32_sharpen_throughputs
+big_sharpen_chisel_prints = sequence $
+  fmap (\s -> compile_to_file
+              big_real_32_sharpen (wrap_single_t s)
+              Chisel "bigsharpen") big_real_32_sharpen_throughputs
 
 big_real_32_tests = testGroup "Big Real 32 Tests"
   [

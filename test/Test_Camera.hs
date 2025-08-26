@@ -53,7 +53,7 @@ camera_ppar_typechecked' =
   fmap check_type_get_error camera_ppar
 camera_inputs :: [[Word32]] = map (map fromIntegral) [[i * i | i <- [1..row_size_camera * col_size_camera]]]
 camera_output :: [(Word32, (Word32, Word32))] = do
-  let demosaic_out = demosaic_generator TD.row_size_demosaic 
+  let demosaic_out = demosaic_generator TD.row_size_demosaic
                      (camera_inputs !! 0)
   let red_demosaic = map fst demosaic_out
   let red = zipWith sharpen_one_pixel'
@@ -104,6 +104,15 @@ camera_st_prints = sequence $
               camera (Type_Rewrites s)
               text_backend "camera") camera_tr
 
+big_camera_st_prints = sequence $
+  fmap (\s -> compile_to_file
+              camera (wrap_single_t s)
+              text_backend "bigcamera") camera_throughputs
+big_camera_chisel_prints = sequence $
+  fmap (\s -> compile_to_file
+              camera (wrap_single_t s)
+              Chisel "bigcamera") camera_throughputs
+
 camera_tests = testGroup "Camera Tests"
   [
     --testCase "single camera with tr 1/4" $
@@ -113,7 +122,7 @@ camera_tests = testGroup "Camera Tests"
     --testCase "printing cameras" $
     --((\x -> returnIO True) camera_st_prints) @? "printing cameras"
   ]
-  
+
 camera_tests' = testGroup "Camera Tests"
   [
     testCase "single camera" $
