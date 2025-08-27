@@ -281,15 +281,9 @@ compile_to_file' shallow_seq_program s_target l_target output_name_template = do
     Magma -> do
       compile_to_magma deep_st_programs
     Chisel -> do
-      compile_to_chisel deep_st_programs
-    Text -> compile_to_text deep_st_programs
+      compile_to_chisel deep_st_programs s_target output_name_template
+    Text -> compile_to_text deep_st_programs s_target output_name_template
     where
-      one_program = case s_target of
-                      Min_Area_With_Slowdown_Factor s -> True
-                      Min_Area_With_Throughput _ -> True
-                      All_With_Slowdown_Factor s -> False
-                      Type_Rewrites trs -> True
-                      Output_ST_Type _ -> True
       -- | the next three are helpers for compile_to_file for each backend
       compile_to_magma :: [STE.Expr] ->
                           ExceptT Compiler_Error IO [Process_Result]
@@ -298,61 +292,71 @@ compile_to_file' shallow_seq_program s_target l_target output_name_template = do
                                 M_Expr_To_Str.module_to_magma_string)
                            deep_st_programs
         lift $ sequence $ map (\(p_str, idx) -> do
-                let output_file_name = compute_output_file_name idx one_program
+                let output_file_name = compute_output_file_name l_target s_target idx (one_program s_target) output_name_template
                 let p_str_with_verilog_out = p_str ++ "\n" ++
                       M_Expr_To_Str.magma_verilog_output_epilogue
                       (replaceExtension "v" output_file_name)
                 write_file_ae output_file_name p_str_with_verilog_out
                 run_process ("python " ++ output_file_name) Nothing
             ) (zip program_strs [0..])
-      compile_to_chisel :: [STE.Expr] ->
-                          ExceptT Compiler_Error IO [Process_Result]
-      compile_to_chisel deep_st_programs  = do
-        let program_strs = map (H_Expr_To_Str.module_str .
-                                C_Expr_To_Str.module_to_chisel_string)
-                           deep_st_programs
-        lift $ sequence $
-          map (\(p_str, idx) -> do
-                  let output_file_name = compute_output_file_name idx one_program
-                  let verilog_file_name = replaceExtension output_file_name "v"
-                  -- this puts the output_file in the chisel dir for sbt
-                  let chisel_file_name = chisel_dir ++ "/" ++
-                                         chisel_top_src_path ++ "/" ++
-                                         "Top.scala"
-                  let p_str_with_verilog_out = p_str ++ "\n" ++
-                        C_Expr_To_Str.chisel_verilog_output_epilogue
-                  write_file_ae output_file_name p_str_with_verilog_out
-                  run_process
-                    (root_dir ++
-                      "/src/Core/Aetherling/Interpretations/" ++
-                      "Backend_Execute/Chisel/compile_chisel.sh " ++
-                      "'" ++ output_file_name  ++ "'" ++ " " ++
-                      "'" ++ chisel_dir        ++ "'" ++ " " ++
-                      "'" ++ verilog_file_name ++ "'"
-                    ) Nothing
-              ) (zip program_strs [0..])
-      compile_to_text :: [STE.Expr] ->
-                         ExceptT Compiler_Error IO [Process_Result]
-      compile_to_text deep_st_programs =
-        lift $ sequence $
-        map (\(p_expr,idx) -> do
-                let p_str = ST_Print.print_st_str p_expr
-                let output_file_name = compute_output_file_name idx one_program
-                write_file_ae output_file_name p_str
-                return $ Process_Result ExitSuccess "" ""
-            ) (zip deep_st_programs [0..])
-
       s_str = slowdown_target_to_file_name_string s_target
-      compute_output_file_name :: Int -> Bool -> String
-      compute_output_file_name i exclude_index = do
-        let (l_target_dir, l_file_ending) =
-              case l_target of
-                Magma -> ("magma_examples", ".py")
-                Chisel -> ("chisel_examples", ".scala")
-                Text -> ("st_examples", ".txt")
-        root_dir ++ "/test/no_bench/" ++ l_target_dir ++ "/" ++
-          params_to_file_name output_name_template s_target i exclude_index ++
-          l_file_ending
+
+compile_to_chisel :: [STE.Expr] -> Throughput_Target -> String ->
+                    ExceptT Compiler_Error IO [Process_Result]
+compile_to_chisel deep_st_programs s_target output_name_template = do
+  let program_strs = map (H_Expr_To_Str.module_str .
+                          C_Expr_To_Str.module_to_chisel_string)
+                      deep_st_programs
+  lift $ sequence $
+    map (\(p_str, idx) -> do
+            let output_file_name = compute_output_file_name Chisel s_target idx (one_program s_target) output_name_template
+            let verilog_file_name = replaceExtension output_file_name "v"
+            -- this puts the output_file in the chisel dir for sbt
+            let chisel_file_name = chisel_dir ++ "/" ++
+                                    chisel_top_src_path ++ "/" ++
+                                    "Top.scala"
+            let p_str_with_verilog_out = p_str ++ "\n" ++
+                  C_Expr_To_Str.chisel_verilog_output_epilogue
+            write_file_ae output_file_name p_str_with_verilog_out
+            run_process
+              (root_dir ++
+                "/src/Core/Aetherling/Interpretations/" ++
+                "Backend_Execute/Chisel/compile_chisel.sh " ++
+                "'" ++ output_file_name  ++ "'" ++ " " ++
+                "'" ++ chisel_dir        ++ "'" ++ " " ++
+                "'" ++ verilog_file_name ++ "'"
+              ) Nothing
+        ) (zip program_strs [0..])
+
+one_program :: Throughput_Target -> Bool
+one_program s_target = case s_target of
+                        Min_Area_With_Slowdown_Factor s -> True
+                        Min_Area_With_Throughput _ -> True
+                        All_With_Slowdown_Factor s -> False
+                        Type_Rewrites trs -> True
+                        Output_ST_Type _ -> True
+
+compile_to_text :: [STE.Expr] -> Throughput_Target -> String ->
+                    ExceptT Compiler_Error IO [Process_Result]
+compile_to_text deep_st_programs s_target output_name_template =
+  lift $ sequence $
+  map (\(p_expr,idx) -> do
+          let p_str = ST_Print.print_st_str p_expr
+          let output_file_name = compute_output_file_name Text s_target idx (one_program s_target) output_name_template
+          write_file_ae output_file_name p_str
+          return $ Process_Result ExitSuccess "" ""
+      ) (zip deep_st_programs [0..])
+
+compute_output_file_name :: Language_Target -> Throughput_Target -> Int -> Bool -> String -> String
+compute_output_file_name l_target s_target i exclude_index output_name_template = do
+  let (l_target_dir, l_file_ending) =
+        case l_target of
+          Magma -> ("magma_examples", ".py")
+          Chisel -> ("chisel_examples", ".scala")
+          Text -> ("st_examples", ".txt")
+  root_dir ++ "/test/no_bench/" ++ l_target_dir ++ "/" ++
+    params_to_file_name output_name_template s_target i exclude_index ++
+    l_file_ending
 
 write_file_ae :: String -> String -> IO ()
 write_file_ae file_name p_str = do

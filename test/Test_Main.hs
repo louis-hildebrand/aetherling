@@ -16,6 +16,7 @@ import Test_Big_Real_Math32
 import Test_Demosaic
 import Test_Camera
 import Test_More_Simple_Benchmarks
+import Test_Primitives
 import Aetherling.Languages.Space_Time.Deep.Expr_Type_Conversions
 import Aetherling.Languages.Space_Time.Deep.Types
 import Aetherling.Rewrites.Sequence_To_Partially_Parallel_Space_Time.Rewrite_All_Types
@@ -28,6 +29,7 @@ main :: IO ()
 main = do
   print_st_text
   print_verilog
+  -- test_primitives
 
 print_st_text :: IO ()
 print_st_text = do
@@ -60,3 +62,9 @@ print_verilog = do
   single_reduce_sum_chisel_prints
   single_map_200_chisel_prints
   return ()
+
+test_primitives :: IO ()
+test_primitives = do
+  test_down_1d_s
+  test_down_1d_t
+  test_counter_ts
