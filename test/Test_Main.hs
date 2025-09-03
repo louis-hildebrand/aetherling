@@ -68,3 +68,4 @@ test_primitives = do
   test_down_1d_s
   test_down_1d_t
   test_counter_ts
+  test_counter_tn

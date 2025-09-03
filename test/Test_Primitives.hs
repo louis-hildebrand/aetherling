@@ -50,3 +50,19 @@ test_counter_ts = do
   let delta = 3
   let count = Counter_tsN no io ni delta UInt8T 0 (Index 1)
   emit count "count_ts"
+
+test_counter_tn :: IO ()
+test_counter_tn = do
+  let ns = [6, 1]
+  let is = [0, 3]
+  let delta = 2
+  let count = Counter_tnN ns is delta UInt8T 0 (Index 1)
+  emit count "count_tn"
+
+-- TODO: Remove_1_sN
+-- TODO: Shift_tnN
+-- TODO: Partition_s_ssN
+-- TODO: Partition_t_ttN
+-- TODO: Unpartition_s_ssN
+-- TODO: Unpartition_t_ttN
+-- TODO: SerializeN
