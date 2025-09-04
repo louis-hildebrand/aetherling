@@ -24,6 +24,7 @@ import Data.Proxy
 import Data.Traversable
 import GHC.TypeLits
 import GHC.TypeLits.Extra
+import Data.List
 import Data.Ratio
 import Data.Word
 import qualified Test_Demosaic as TD
@@ -112,6 +113,13 @@ big_camera_chisel_prints = sequence $
   fmap (\s -> compile_to_file
               camera (wrap_single_t s)
               Chisel "bigcamera") camera_throughputs
+
+dump_camera_outputs :: IO ()
+dump_camera_outputs = do
+  let str = intercalate "\n" $
+            map (\(r, (g, b)) -> intercalate "," $ map show [r, g, b]) $
+            take ((fromInteger row_size_camera) * 8) camera_output
+  writeFile "test/no_bench/camera_outputs.csv" str
 
 camera_tests = testGroup "Camera Tests"
   [

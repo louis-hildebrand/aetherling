@@ -29,6 +29,7 @@ main :: IO ()
 main = do
   print_st_text
   print_verilog
+  dump_camera_outputs
   -- test_primitives
 
 print_st_text :: IO ()
