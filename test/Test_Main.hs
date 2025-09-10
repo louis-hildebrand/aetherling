@@ -15,6 +15,7 @@ import Test_Big_Real_Math16
 import Test_Big_Real_Math32
 import Test_Demosaic
 import Test_Camera
+import Test_Camera_Small
 import Test_More_Simple_Benchmarks
 import Test_Primitives
 import Aetherling.Languages.Space_Time.Deep.Expr_Type_Conversions
@@ -27,13 +28,15 @@ import Data.List
 
 main :: IO ()
 main = do
-  print_st_text
-  print_verilog
-  dump_camera_outputs
+  -- print_st_text
+  -- print_verilog
+  -- dump_camera_outputs
+  dump_small_camera_outputs
   -- test_primitives
 
 print_st_text :: IO ()
 print_st_text = do
+  small_camera_st_prints
   big_camera_st_prints
   big_sharpen_st_prints
   big_convb2b_st_prints
@@ -50,6 +53,7 @@ print_st_text = do
 
 print_verilog :: IO ()
 print_verilog = do
+  small_camera_chisel_prints
   big_camera_chisel_prints
   big_sharpen_chisel_prints
   big_convb2b_chisel_prints
