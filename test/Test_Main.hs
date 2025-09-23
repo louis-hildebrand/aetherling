@@ -28,11 +28,12 @@ import Data.List
 
 main :: IO ()
 main = do
-  -- print_st_text
-  -- print_verilog
+  print_st_text
+  print_verilog
   -- dump_camera_outputs
-  dump_small_camera_outputs
+  -- dump_small_camera_outputs
   -- test_primitives
+  -- small_mvm_st_prints
 
 print_st_text :: IO ()
 print_st_text = do

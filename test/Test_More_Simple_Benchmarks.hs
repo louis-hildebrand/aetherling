@@ -90,3 +90,25 @@ conv1d_chisel_prints = sequence $
               conv1d (wrap_single_t s)
               Chisel "conv1d")
   conv1d_throughputs
+
+-- Matrix-vector multiplication
+--------------------------------------------------------------------------------
+
+small_mvm =
+  let mat = com_input_seq "I0" (Proxy :: Proxy (Seq 16 Atom_UInt8)) in
+  let vec = com_input_seq "I1" (Proxy :: Proxy (Seq 4 Atom_UInt8)) in
+  mapC (\row -> dot row vec) (partitionC (Proxy @4) (Proxy @4) mat)
+
+small_mvm_throughputs = [1%4]
+
+small_mvm_st_prints = sequence $
+  fmap (\s -> compile_to_file
+              small_mvm (wrap_single_t s)
+              text_backend "smallmvm")
+  small_mvm_throughputs
+
+small_mvm_chisel_prints = sequence $
+  fmap (\s -> compile_to_file
+              small_mvm (wrap_single_t s)
+              Chisel "smallmvm")
+  small_mvm_throughputs
