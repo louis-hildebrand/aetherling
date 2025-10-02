@@ -40,11 +40,11 @@ dot s0 s1 =
   reduceC addC products
 
 dot_prod =
-  let s0 = com_input_seq "I0" (Proxy :: Proxy (Seq 840 Atom_UInt16)) in
-  let s1 = com_input_seq "I1" (Proxy :: Proxy (Seq 840 Atom_UInt16)) in
+  let s0 = com_input_seq "I0" (Proxy :: Proxy (Seq 512 Atom_UInt16)) in
+  let s1 = com_input_seq "I1" (Proxy :: Proxy (Seq 512 Atom_UInt16)) in
   dot s0 s1
 
-dot_prod_throughputs = single_reduce_throughputs
+dot_prod_throughputs = map (\t -> t % 512) [1, 2, 4, 8, 16]
 
 dot_prod_st_prints = sequence $
   fmap (\s -> compile_to_file
