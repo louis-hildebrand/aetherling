@@ -18,6 +18,7 @@ import Test_Camera
 import Test_Camera_Small
 import Test_More_Simple_Benchmarks
 import Test_Primitives
+import Test_Sobel
 import Aetherling.Languages.Space_Time.Deep.Expr_Type_Conversions
 import Aetherling.Languages.Space_Time.Deep.Types
 import Aetherling.Rewrites.Sequence_To_Partially_Parallel_Space_Time.Rewrite_All_Types
@@ -37,6 +38,7 @@ main = do
 
 print_st_text :: IO ()
 print_st_text = do
+  sobel_st_prints
   sqrt_st_prints
   small_camera_st_prints
   big_camera_st_prints
@@ -55,6 +57,7 @@ print_st_text = do
 
 print_verilog :: IO ()
 print_verilog = do
+  sobel_chisel_prints
   sqrt_chisel_prints
   small_camera_chisel_prints
   big_camera_chisel_prints
