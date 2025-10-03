@@ -112,3 +112,50 @@ small_mvm_chisel_prints = sequence $
               small_mvm (wrap_single_t s)
               Chisel "smallmvm")
   small_mvm_throughputs
+
+-- Integer square root
+--------------------------------------------------------------------------------
+
+my_sqrt in_seq = do
+  let init n = let lo = const_genC (Atom_UInt16 0) n in
+               let one16 = const_genC (Atom_UInt16 1) n in
+               let one8 = const_genC (Atom_UInt8 1) n in
+               let half = lsrC $ atom_tupleC n one8 in
+               let hi = addC $ atom_tupleC half one16 in
+               atom_tupleC n (atom_tupleC lo hi)
+  let step x = let n = fstC x in
+               let lo = fstC $ sndC x in
+               let hi = sndC $ sndC x in
+               let lo_plus_hi = addC $ atom_tupleC lo hi in
+               let one8 = const_genC (Atom_UInt8 1) n in
+               let one16 = const_genC (Atom_UInt16 1) n in
+               let mid0 = lsrC $ atom_tupleC lo_plus_hi one8 in
+               let mid0_plus_one = addC $ atom_tupleC mid0 one16 in
+               let mid1 = ifC $ atom_tupleC (eqC $ atom_tupleC mid0 lo) $ atom_tupleC mid0_plus_one mid0 in
+               let mid_sq = mulC $ atom_tupleC mid1 mid1 in
+               let c = ltC $ atom_tupleC n mid_sq in
+               let out_then = atom_tupleC lo (subC $ atom_tupleC mid1 one16) in
+               let out_else = atom_tupleC mid1 hi in
+               let new_lo_hi = ifC $ atom_tupleC c $ atom_tupleC out_then out_else in
+               atom_tupleC n new_lo_hi
+  let n_lo_hi_0 = mapC init in_seq
+  let n_lo_hi_16 = foldr (\_ -> mapC step) n_lo_hi_0 [1..16]
+  mapC (\x -> fstC $ sndC x) n_lo_hi_16
+
+sqrt_bench =
+  let s = com_input_seq "I" (Proxy :: Proxy (Seq 1024 Atom_UInt16)) in
+  my_sqrt s
+
+sqrt_throughputs = [1, 4]
+
+sqrt_st_prints = sequence $
+  fmap (\s -> compile_to_file
+              sqrt_bench (wrap_single_t s)
+              text_backend "sqrt")
+  sqrt_throughputs
+
+sqrt_chisel_prints = sequence $
+  fmap (\s -> compile_to_file
+              sqrt_bench (wrap_single_t s)
+              Chisel "sqrt")
+  sqrt_throughputs
