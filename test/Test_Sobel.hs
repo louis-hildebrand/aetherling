@@ -50,28 +50,23 @@ tuple_2d_mul_shallow_no_input kernel in_seq = do
 
 my_sqrt in_seq = do
   let init n = let lo = const_genC (Atom_Int32 0) n in
-               let one32 = const_genC (Atom_Int32 1) n in
-               let one8 = const_genC (Atom_UInt8 1) n in
-               let half = lsrC $ atom_tupleC n one8 in
-               let hi = addC $ atom_tupleC half one32 in
+               let hi = const_genC (Atom_Int32 65535) n in
                atom_tupleC n (atom_tupleC lo hi)
   let step x = let n = fstC x in
                let lo = fstC $ sndC x in
                let hi = sndC $ sndC x in
-               let lo_plus_hi = addC $ atom_tupleC lo hi in
                let one8 = const_genC (Atom_UInt8 1) n in
                let one32 = const_genC (Atom_Int32 1) n in
-               let mid0 = lsrC $ atom_tupleC lo_plus_hi one8 in
-               let mid0_plus_one = addC $ atom_tupleC mid0 one32 in
-               let mid1 = ifC $ atom_tupleC (eqC $ atom_tupleC mid0 lo) $ atom_tupleC mid0_plus_one mid0 in
-               let mid_sq = mulC $ atom_tupleC mid1 mid1 in
+               let lo_plus_hi_plus_one = addC $ atom_tupleC one32 (addC $ atom_tupleC lo hi) in
+               let mid = lsrC $ atom_tupleC lo_plus_hi_plus_one one8 in
+               let mid_sq = mulC $ atom_tupleC mid mid in
                let c = ltC $ atom_tupleC n mid_sq in
-               let out_then = atom_tupleC lo (subC $ atom_tupleC mid1 one32) in
-               let out_else = atom_tupleC mid1 hi in
+               let out_then = atom_tupleC lo (subC $ atom_tupleC mid one32) in
+               let out_else = atom_tupleC mid hi in
                let new_lo_hi = ifC $ atom_tupleC c $ atom_tupleC out_then out_else in
                atom_tupleC n new_lo_hi
   let n_lo_hi_0 = mapC init in_seq
-  let n_lo_hi_32 = foldr (\_ -> mapC step) n_lo_hi_0 [1..32]
+  let n_lo_hi_32 = foldr (\_ -> mapC step) n_lo_hi_0 [1..16]
   mapC (\x -> fstC $ sndC x) n_lo_hi_32
 
 sobel in_col in_seq = do
