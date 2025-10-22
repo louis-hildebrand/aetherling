@@ -38,6 +38,7 @@ main = do
 
 print_st_text :: IO ()
 print_st_text = do
+  small_mvm_st_prints
   sobel_st_prints
   sqrt_st_prints
   small_camera_st_prints
@@ -57,6 +58,7 @@ print_st_text = do
 
 print_verilog :: IO ()
 print_verilog = do
+  small_mvm_chisel_prints
   sobel_chisel_prints
   sqrt_chisel_prints
   small_camera_chisel_prints

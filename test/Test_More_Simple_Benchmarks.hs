@@ -97,9 +97,15 @@ conv1d_chisel_prints = sequence $
 small_mvm =
   let mat = com_input_seq "I0" (Proxy :: Proxy (Seq 16 Atom_UInt8)) in
   let vec = com_input_seq "I1" (Proxy :: Proxy (Seq 4 Atom_UInt8)) in
-  mapC (\row -> dot row vec) (partitionC (Proxy @4) (Proxy @4) mat)
+  -- Doesn't work:
+  -- mapC (\row -> dot row vec) (partitionC (Proxy @4) (Proxy @4) mat)
+  let repeated_vec = unpartitionC $ up_1dC (Proxy @4) $ partitionC (Proxy @1) (Proxy @4) vec in
+  let products1d = map2C curried_mul mat repeated_vec in
+  let products2d = partitionC (Proxy @4) (Proxy @4) products1d in
+  let result = unpartitionC $ mapC (reduceC addC) products2d in
+  result
 
-small_mvm_throughputs = [1%4]
+small_mvm_throughputs = [1%4, 1%2, 1]
 
 small_mvm_st_prints = sequence $
   fmap (\s -> compile_to_file
