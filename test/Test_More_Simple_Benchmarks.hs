@@ -91,7 +91,7 @@ conv1d_chisel_prints = sequence $
               Chisel "conv1d")
   conv1d_throughputs
 
--- Matrix-vector multiplication
+-- Small matrix-vector multiplication
 --------------------------------------------------------------------------------
 
 small_mvm =
@@ -118,6 +118,34 @@ small_mvm_chisel_prints = sequence $
               small_mvm (wrap_single_t s)
               Chisel "smallmvm")
   small_mvm_throughputs
+
+-- Bigger matrix-vector multiplication
+--------------------------------------------------------------------------------
+
+big_mvm =
+  let mat = com_input_seq "I0" (Proxy :: Proxy (Seq 65536 Atom_UInt16)) in
+  let vec = com_input_seq "I1" (Proxy :: Proxy (Seq 256 Atom_UInt16)) in
+  -- Doesn't work:
+  -- mapC (\row -> dot row vec) (partitionC (Proxy @256) (Proxy @256) mat)
+  let repeated_vec = unpartitionC $ up_1dC (Proxy @256) $ partitionC (Proxy @1) (Proxy @256) vec in
+  let products1d = map2C curried_mul mat repeated_vec in
+  let products2d = partitionC (Proxy @256) (Proxy @256) products1d in
+  let result = unpartitionC $ mapC (reduceC addC) products2d in
+  result
+
+big_mvm_throughputs = [1%256, 1%128, 1%64, 1%32, 1%16]
+
+big_mvm_st_prints = sequence $
+  fmap (\s -> compile_to_file
+              big_mvm (wrap_single_t s)
+              text_backend "bigmvm")
+  big_mvm_throughputs
+
+big_mvm_chisel_prints = sequence $
+  fmap (\s -> compile_to_file
+              big_mvm (wrap_single_t s)
+              Chisel "bigmvm")
+  big_mvm_throughputs
 
 -- Integer square root
 --------------------------------------------------------------------------------
