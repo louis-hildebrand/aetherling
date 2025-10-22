@@ -76,7 +76,11 @@ print_verilog = do
 
 test_primitives :: IO ()
 test_primitives = do
-  test_down_1d_s
-  test_down_1d_t
   test_counter_ts
   test_counter_tn
+  test_shift_tt
+  test_shift_tn
+  test_up_1d_s
+  test_up_1d_t
+  test_down_1d_s
+  test_down_1d_t
