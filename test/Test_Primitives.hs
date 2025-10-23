@@ -25,6 +25,25 @@ emit e name = do
   emit_text e (wrap_single_t 1) name
   emit_chisel e (wrap_single_t 1) name
 
+test_lut_gen :: IO ()
+test_lut_gen = do
+  let count = Counter_tN 4 0 3 UInt8T 0 (Index 1)
+  let lut = fmap (\x -> Int32V (5 * x)) [0..15]
+  let map = Map_tN 4 0 (Lut_GenN lut Int32T (InputN UInt8T "I" (Index 2)) (Index 3)) count (Index 4)
+  -- The Chisel backend apparently doesn't support Lut_GenN.
+  --
+  -- Aetherling> test (suite: Aetherling-Tests, args: --num-threads 1)
+  --
+  -- Progress 1/2: AetherlingAetherling-Tests: don't support yet: Lut_GenN {lookup_table = [Int32V 0,Int32V 5,Int32V 10,Int32V 15,Int32V 20,Int32V 25,Int32V 30,Int32V 35,Int32V 40,Int32V 45,Int32V 50,Int32V 55,Int32V 60,Int32V 65,Int32V 70,Int32V 75], lookup_types = Int32T, seq_in = InputN {t = UInt8T, input_name = "I", index = Index 2}, index = Index 3}
+  emit_text map (wrap_single_t 1) "lut"
+
+test_tuple_values :: IO ()
+test_tuple_values = do
+  let v = ATupleV (ATupleV (BitV False) (BitV True))
+                  (STupleV [UInt8V 42, UInt8V 26])
+  let e = Const_GenN v (ATupleT (ATupleT BitT BitT) (STupleT 2 UInt8T)) 0 (Index 1)
+  emit e "tuple_values"
+
 test_counter_ts :: IO ()
 test_counter_ts = do
   let no = 10
@@ -103,3 +122,25 @@ test_down_1d_t = do
   let count = Counter_tN n i 3 UInt8T 0 (Index 1)
   let down = Down_1d_tN n i idx UInt8T count (Index 2)
   emit down "down_1d_t"
+
+test_unpartition_t :: IO ()
+test_unpartition_t = do
+  let no = 3
+  let io = 0
+  let ni = 1
+  let ii = 1
+  let count = Counter_tnN [no, ni] [io, ii] 1 UInt16T 0 (Index 1)
+  let joined = Unpartition_t_ttN no ni io ii UInt16T count (Index 2)
+  emit joined "unpartition_t"
+
+test_remove_1_t :: IO ()
+test_remove_1_t = do
+  let int = Int8T
+  let sv = TSeqV { vals = [TSeqV { vals = [Int8V (-42), Int8V 0, Int8V 9],
+                                   i_v = 0 }],
+                   i_v = 0 }
+  let s = Const_GenN sv (TSeqT 1 0 (TSeqT 3 0 int)) 0 (Index 1)
+  let f = AbsN int (InputN int "I" $ Index 2) (Index 3)
+  let map_f = Map_tN 3 0 f (InputN (TSeqT 3 0 int) "I" (Index 4)) (Index 5)
+  let removed = Remove_1_0_tN map_f s (Index 6)
+  emit removed "remove_1_t"
