@@ -147,6 +147,60 @@ big_mvm_chisel_prints = sequence $
               Chisel "bigmvm")
   big_mvm_throughputs
 
+-- Small matrix-matrix multiplication
+--------------------------------------------------------------------------------
+
+small_mmm =
+  let a = com_input_seq "I0" (Proxy :: Proxy (Seq 4 (Seq 4 Atom_UInt16))) in
+  let b_t = com_input_seq "I1" (Proxy :: Proxy (Seq 4 (Seq 4 Atom_UInt16))) in
+  let a_repeated = unpartitionC $ mapC (\row -> unpartitionC $ up_1dC (Proxy @4) $ partitionC (Proxy @1) (Proxy @4) row) a in
+  let b_t_repeated = unpartitionC $ unpartitionC $ up_1dC (Proxy @4) $ partitionC (Proxy @1) (Proxy @4) b_t in
+  let products1d = map2C curried_mul a_repeated b_t_repeated in
+  let products2d = partitionC (Proxy @16) (Proxy @4) products1d in
+  let result = unpartitionC $ mapC (reduceC addC) products2d in
+  result
+
+small_mmm_throughputs = [1%4, 1%2, 1]
+
+small_mmm_st_prints = sequence $
+  fmap (\s -> compile_to_file
+              small_mmm (wrap_single_t s)
+              text_backend "smallmmm")
+  small_mmm_throughputs
+
+small_mmm_chisel_prints = sequence $
+  fmap (\s -> compile_to_file
+              small_mmm (wrap_single_t s)
+              Chisel "smallmmm")
+  small_mmm_throughputs
+
+-- Bigger matrix-matrix multiplication
+--------------------------------------------------------------------------------
+
+big_mmm =
+  let a = com_input_seq "I0" (Proxy :: Proxy (Seq 256 (Seq 256 Atom_UInt16))) in
+  let b_t = com_input_seq "I1" (Proxy :: Proxy (Seq 256 (Seq 256 Atom_UInt16))) in
+  let a_repeated = unpartitionC $ mapC (\row -> unpartitionC $ up_1dC (Proxy @256) $ partitionC (Proxy @1) (Proxy @256) row) a in
+  let b_t_repeated = unpartitionC $ unpartitionC $ up_1dC (Proxy @256) $ partitionC (Proxy @1) (Proxy @256) b_t in
+  let products1d = map2C curried_mul a_repeated b_t_repeated in
+  let products2d = partitionC (Proxy @65536) (Proxy @256) products1d in
+  let result = unpartitionC $ mapC (reduceC addC) products2d in
+  result
+
+big_mmm_throughputs = [1%256, 1%128, 1%64, 1%32, 1%16]
+
+big_mmm_st_prints = sequence $
+  fmap (\s -> compile_to_file
+              big_mmm (wrap_single_t s)
+              text_backend "bigmmm")
+  big_mmm_throughputs
+
+big_mmm_chisel_prints = sequence $
+  fmap (\s -> compile_to_file
+              big_mmm (wrap_single_t s)
+              Chisel "bigmmm")
+  big_mmm_throughputs
+
 -- Integer square root
 --------------------------------------------------------------------------------
 
