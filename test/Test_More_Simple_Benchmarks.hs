@@ -123,15 +123,33 @@ small_mvm_chisel_prints = sequence $
 --------------------------------------------------------------------------------
 
 big_mvm =
-  let mat = com_input_seq "I0" (Proxy :: Proxy (Seq 65536 Atom_UInt16)) in
-  let vec = com_input_seq "I1" (Proxy :: Proxy (Seq 256 Atom_UInt16)) in
-  -- Doesn't work:
-  -- mapC (\row -> dot row vec) (partitionC (Proxy @256) (Proxy @256) mat)
-  let repeated_vec = unpartitionC $ up_1dC (Proxy @256) $ partitionC (Proxy @1) (Proxy @256) vec in
-  let products1d = map2C curried_mul mat repeated_vec in
-  let products2d = partitionC (Proxy @256) (Proxy @256) products1d in
-  let result = unpartitionC $ mapC (reduceC addC) products2d in
-  result
+  let mat = com_input_seq "I0"
+            (Proxy::Proxy (Seq 65536 Atom_UInt16))
+  in
+  let vec = com_input_seq "I1"
+            (Proxy::Proxy (Seq 256 Atom_UInt16))
+  in
+  -- Doesn't work: -------------------------------
+  -- mapC (\row -> dot row vec) $
+  --      partitionC (Proxy @256) (Proxy @256) mat
+  -- ---------------------------------------------
+  -- Repeat vec
+  let repeated_vec = unpartitionC $
+                     up_1dC (Proxy @256) $
+                     partitionC (Proxy @1)
+                                (Proxy @256)
+                                vec
+  in
+  -- Find elementwise product of vec with each row
+  let products2d = partitionC (Proxy @256)
+                              (Proxy @256) $
+                   map2C (\x -> \y ->
+                          mulC $ atom_tupleC x y)
+                         mat repeated_vec
+  in
+  -- Sum each row
+  unpartitionC $ mapC (reduceC addC) products2d
+
 
 big_mvm_throughputs = [1%256, 1%128, 1%64, 1%32, 1%16]
 
