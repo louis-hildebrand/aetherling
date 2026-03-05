@@ -70,15 +70,14 @@ my_sqrt in_seq = do
   mapC (\x -> fstC $ sndC x) n_lo_hi_32
 
 sobel in_col in_seq = do
-  let x_stencil = stencil_3x3_2dC_test in_col in_seq
-  let y_stencil = stencil_3x3_2dC_test in_col in_seq
-  let x_conv = unpartitionC $ unpartitionC $
-        mapC (tuple_2d_mul_shallow_no_input x_kernel) x_stencil
-  let y_conv = unpartitionC $ unpartitionC $
-        mapC (tuple_2d_mul_shallow_no_input y_kernel) y_stencil
-  let x_conv_squared = mapC (\x -> mulC $ atom_tupleC x x) x_conv
-  let y_conv_squared = mapC (\y -> mulC $ atom_tupleC y y) y_conv
-  let norm_squared = map2C (\x -> \y -> addC $ atom_tupleC x y) x_conv_squared y_conv_squared
+  let stencil = stencil_3x3_2dC_test in_col in_seq
+  let gx = unpartitionC $ unpartitionC $
+        mapC (tuple_2d_mul_shallow_no_input x_kernel) stencil
+  let gy = unpartitionC $ unpartitionC $
+        mapC (tuple_2d_mul_shallow_no_input y_kernel) stencil
+  let gx_squared = mapC (\x -> mulC $ atom_tupleC x x) gx
+  let gy_squared = mapC (\y -> mulC $ atom_tupleC y y) gy
+  let norm_squared = map2C (\x -> \y -> addC $ atom_tupleC x y) gx_squared gy_squared
   let norm = my_sqrt norm_squared
   norm
 
