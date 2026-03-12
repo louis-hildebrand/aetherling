@@ -38,6 +38,7 @@ main = do
 
 print_st_text :: IO ()
 print_st_text = do
+  big_jacobi_st_prints
   big_mmm_st_prints
   small_mmm_st_prints
   big_mvm_st_prints
@@ -50,8 +51,6 @@ print_st_text = do
   big_convb2b_st_prints
   big_conv2d_st_prints
   small_sharpen_st_prints
-  small_conv_2d_b2b_st_prints
-  small_conv_2d_st_prints
   big_conv_2d_st_prints
   conv1d_st_prints
   dot_prod_st_prints
@@ -61,6 +60,7 @@ print_st_text = do
 
 print_verilog :: IO ()
 print_verilog = do
+  big_jacobi_chisel_prints
   big_mmm_chisel_prints
   small_mmm_chisel_prints
   big_mvm_chisel_prints
@@ -75,7 +75,6 @@ print_verilog = do
   small_sharpen_chisel_prints
   small_conv_2d_b2b_chisel_prints
   small_conv_2d_chisel_prints
-  big_conv_2d_chisel_prints
   conv1d_chisel_prints
   dot_prod_chisel_prints
   single_reduce_sum_chisel_prints

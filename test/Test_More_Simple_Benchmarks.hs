@@ -6,6 +6,7 @@ import Aetherling.Languages.Sequence.Shallow.Types
 import Aetherling.Rewrites.Sequence_Shallow_To_Deep
 import Data.Proxy
 import Data.Ratio
+import Data.Word
 
 -- sum of the elements in a Seq
 --------------------------------------------------------------------------------
@@ -260,3 +261,51 @@ sqrt_chisel_prints = sequence $
               sqrt_bench (wrap_single_t s)
               Chisel "sqrt")
   sqrt_throughputs
+
+-- Four-point stencil
+--------------------------------------------------------------------------------
+
+stencil_3x3_2dC_test in_col in_img = do
+  let first_row = in_img
+  let second_row = shiftC in_col in_img
+  let third_row = shiftC in_col second_row
+  let first_row_shifted = stencil_3_1dC_nested first_row
+  let second_row_shifted = stencil_3_1dC_nested second_row
+  let third_row_shifted = stencil_3_1dC_nested third_row
+  let tuple = map2C seq_tupleC third_row_shifted second_row_shifted
+  let triple = map2C seq_tuple_appendC tuple first_row_shifted
+  let partitioned_triple = partitionC Proxy (Proxy @1) triple
+  mapC seq_tuple_to_seqC partitioned_triple
+
+jacobi_kernel :: [[Word8]] = [[0, 1, 0],
+                              [1, 0, 1],
+                              [0, 1, 0]]
+
+tuple_2d_mul_shallow_no_input in_seq = do
+  let kernel_list = list_to_seq (Proxy @3) $
+                    fmap (list_to_seq (Proxy @3)) $
+                    fmap (fmap Atom_UInt8) jacobi_kernel
+  let kernel = const_genC kernel_list in_seq
+  let kernel_and_values = map2C (map2C atom_tupleC) in_seq kernel
+  let mul_result = mapC (mapC mulC) kernel_and_values
+  let sum = reduceC'' (mapC addC) $ mapC (reduceC addC) mul_result
+  let shift_list = list_to_seq (Proxy @1) [list_to_seq (Proxy @1) [Atom_UInt8 2]]
+  let shift = const_genC shift_list in_seq
+  let sum_and_shift = map2C (map2C atom_tupleC) sum shift
+  mapC (mapC lsrC) sum_and_shift
+
+big_jacobi = do
+  let in_seq = com_input_seq "I" (Proxy :: Proxy (Seq 131072 Atom_UInt8))
+  let stencil = stencil_3x3_2dC_test (Proxy @128) in_seq
+  let conv_result = mapC tuple_2d_mul_shallow_no_input stencil
+  unpartitionC (unpartitionC conv_result)
+
+big_jacobi_throughputs = [16, 8, 4, 2, 1, 1 % 3]
+big_jacobi_st_prints = sequence $
+  fmap (\s -> compile_to_file
+              big_jacobi (wrap_single_t s)
+              text_backend "bigjacobi") big_jacobi_throughputs
+big_jacobi_chisel_prints = sequence $
+  fmap (\s -> compile_to_file
+              big_jacobi (wrap_single_t s)
+              Chisel "bigjacobi") big_jacobi_throughputs
